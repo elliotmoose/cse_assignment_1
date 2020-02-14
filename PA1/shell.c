@@ -172,6 +172,7 @@ int shellHelp(char **args)
  */
 int shellExit(char **args)
 {
+  exit(0);
   return 0;
 }
 
@@ -270,24 +271,24 @@ int shellExecuteInput(char **args)
         }
         else if(pid == 0) { //child process
           // 4. For the child process, execute the appropriate functions depending on the command in args[0]. Pass char ** args to the function.
-          printf("shellExecuteInput: Child running command %s\n", builtin_commands[i]);      
+          // printf("shellExecuteInput: Child running command %s\n", builtin_commands[i]);      
           builtin_commandFunc[i](args);          
           exit(0); //TODO: do I need to exit? 
         }
         else { //parent process
           // 5. For the parent process, wait for the child process to complete and fetch the child's return value.
           int status;
-          printf("shellExecuteInput: waiting for child\n");      
+          // printf("shellExecuteInput: waiting for child\n");      
           waitpid(pid, &status, WUNTRACED);
           // wait(NULL); //wait for ANY child to complete      
-          printf("shellExecuteInput: Child completed with status: %d\n", status);      
+          // printf("shellExecuteInput: Child completed with status: %d\n", status);      
           return status;
         }
         break; //should not fork more than once      
       }
       else { //if cd, help, exit, or usage.        
         builtin_commandFunc[i](args);          
-        break;
+        return 0;        
       }
     }
   }
@@ -299,7 +300,7 @@ int shellExecuteInput(char **args)
     printf("The command \"%s\" does not exist. Type help to see what commands are available.\n", args[0]);
   }
 
-  return 1;
+  return 0;
 }
 
 /**
@@ -384,17 +385,28 @@ void shellLoop(void)
   //write a loop where you do the following:
 
   // 1. print the message prompt
+  printf(">");
   // 2. clear the buffer and move the output to the console using fflush
+  // fflush(stdin);
   // 3. clear the buffer to accept a new string in readLine()
   // 4. invoke shellReadLine() and store the output at line
+  line = shellReadLine();
   // 5. invoke shellTokenizeInput(line) and store the output at args**
+  args = shellTokenizeInput(line);
   // 6. execute the tokens using shellExecuteInput(args)
 
   // 7. free memory location containing the strings of characters
   // 8. free memory location containing char* to the first letter of each word in the input string
+  
   // 9. check return value of shellExecuteInput. If 1, continue the loop (point 1) again and prompt for another input. Else, exit shell. 
-
-
+  status = shellExecuteInput(args);
+  if(status == 0) { //TODO: requirement says return 1, but ok return is 0??
+    shellLoop();
+  }
+  else {
+    printf("Shell terminated with status code %d\n", status);
+    exit(0);
+  }
 }
 
 
@@ -411,23 +423,23 @@ int sum(int x, int y) {
 int main(int argc, char **argv)
 {
 
-  printf("Shell Run successful. Running now: \n");
+  // printf("Shell Run successful. Running now: \n");
 
 
   //legal declaration and initialization of pointer to function
   // int (*sum_function_pointer)(int, int) = &sum;  
 
   // Run command loop
-  // shellLoop();
-  char* line = shellReadLine();
+  shellLoop();
+  // char* line = shellReadLine();
   // char* line = &"hello world elliot";
-  char** args = shellTokenizeInput(line);
+  // char** args = shellTokenizeInput(line);
   // int i;
   // for (i = 0; i < 3; i++) {
   //     printf("token at index %d is %s\n",i, args[i]);
   // }
 
-  shellExecuteInput(args);
+  // shellExecuteInput(args);
 
   // printf("The fetched line is : %s \n", line);
   // free(line);
