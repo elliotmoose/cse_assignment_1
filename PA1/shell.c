@@ -256,18 +256,15 @@ int shellExecuteInput(char **args)
   // 2. Otherwise, check if args[0] is in any of our builtin_commands, and that it is NOT cd, help, exit, or usage.
   int i;
   int is_builtin = 0;
-  int should_fork = 0;
   for(i = 0; i < sizeof(builtin_commands) / sizeof(builtin_commands[0]); i++)
   {
-    // printf("checking for command: %s\n", builtin_commands[i]);
-    //is in builtin and is not cd, help, exit, usage
+    
+    //check is in builtin
     if(strcmp(builtin_commands[i], args[0]) == 0) {
-      // printf("found match: %s\n", builtin_commands[i]);
-      is_builtin = 1;
+      is_builtin = 1;      
+      // 3. If conditions in (2) are satisfied, perform fork(). Check if fork() is successful. (check is not cd, help, exit, usage)
       if(i >= 4) {
         int pid = fork();
-        // printf("fork pid: %d", pid);
-
         if (pid < 0) {
           fprintf(stderr, "shellExecuteInput: Fork Failed");
         }
@@ -284,23 +281,22 @@ int shellExecuteInput(char **args)
           waitpid(pid, &status, WUNTRACED);
           // wait(NULL); //wait for ANY child to complete      
           printf("shellExecuteInput: Child completed with status: %d\n", status);      
+          return status;
         }
-
-        break; //should not fork more than once
+        break; //should not fork more than once      
       }
-      else {
-        printf("%d\n",strcmp(builtin_commands[i], args[0]));
-        printf("shellExecuteInput: Command is either cd, help, exit or usage\n");
+      else { //if cd, help, exit, or usage.        
+        builtin_commandFunc[i](args);          
         break;
       }
     }
   }
     
-  // 3. If conditions in (2) are satisfied, perform fork(). Check if fork() is successful.
+  
   // 6. Return the child's return value to the caller of shellExecuteInput  
   // 7. If args[0] is not in builtin_command, print out an error message to tell the user that command doesn't exist and return 1
   if(is_builtin != 1) {
-    printf("The command %s does not exist\n", args[0]);
+    printf("The command \"%s\" does not exist. Type help to see what commands are available.\n", args[0]);
   }
 
   return 1;
